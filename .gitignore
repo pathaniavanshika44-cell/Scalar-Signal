@@ -1,0 +1,28 @@
+# Python
+backend/venv/
+__pycache__/
+*.py[cod]
+
+# SQLite database
+backend/*.db
+
+# Environment variables
+.env
+.env.local
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Node
+frontend/node_modules/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
