@@ -11,9 +11,8 @@ import ContactsModal from "./components/ContactsModal";
 import GroupMembersModal from "./components/GroupMembersModal";
 import SettingsModal from "./components/SettingsModal";
 
-const API_URL = "http://localhost:8000";
-const WS_URL = "ws://localhost:8000";
-
+const API_URL = "https://scalar-signal-backend.onrender.com";
+const WS_URL = "wss://scalar-signal-backend.onrender.com";
 type User = {
   id: number;
   username: string;
@@ -495,10 +494,10 @@ export default function Home() {
       setConnectionStatus("reconnecting");
 
       const websocket = new WebSocket(
-        `${WS_URL}/ws/${conversationId}?token=${encodeURIComponent(
-          token
-        )}`
-      );
+  `${WS_URL}/ws/${conversationId}?token=${encodeURIComponent(
+    token ?? ""
+  )}`
+);
 
       socketRef.current = websocket;
 
