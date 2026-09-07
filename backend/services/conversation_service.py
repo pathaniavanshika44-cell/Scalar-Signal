@@ -338,38 +338,25 @@ def remove_group_member(
 
 
 
-
-def get_user_conversations(
-    db: Session,
-    user_id: int
-):
+def get_user_conversations(db: Session, user_id: int):
     conversations = (
         db.query(Conversation)
         .join(
             ConversationMember,
-            Conversation.id == ConversationMember.conversation_id
+            ConversationMember.conversation_id == Conversation.id
         )
-        .filter(
-            ConversationMember.user_id == user_id
-        )
-        .order_by(
-            Conversation.updated_at.desc()
-        )
+        .filter(ConversationMember.user_id == user_id)
+        .order_by(Conversation.updated_at.desc())
         .all()
     )
 
     result = []
 
     for conversation in conversations:
-        # Get the latest message
         latest_message = (
             db.query(Message)
-            .filter(
-                Message.conversation_id == conversation.id
-            )
-            .order_by(
-                Message.created_at.desc()
-            )
+            .filter(Message.conversation_id == conversation.id)
+            .order_by(Message.created_at.desc())
             .first()
         )
 
@@ -412,22 +399,21 @@ def get_user_conversations(
             .count()
         )
 
-    result.append({
-        "id": conversation.id,
-        "type": conversation.type,
-        "name": name,
-        "avatar_url": avatar_url,
-        "last_message": (
-            latest_message.content
-            if latest_message
-            else None
-        ),
-    "updated_at": conversation.updated_at,
-    "unread_count": unread_count
-})
+        result.append({
+            "id": conversation.id,
+            "type": conversation.type,
+            "name": name,
+            "avatar_url": avatar_url,
+            "last_message": (
+                latest_message.content
+                if latest_message
+                else None
+            ),
+            "updated_at": conversation.updated_at,
+            "unread_count": unread_count
+        })
 
     return result
-
 
 
 

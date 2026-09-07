@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
-
+from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
 
 from database import Base, engine, SessionLocal
@@ -23,7 +23,18 @@ from utils.jwt import SECRET_KEY, ALGORITHM
 
 app = FastAPI(title="Scalar Signal API")
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 Base.metadata.create_all(bind=engine)
+
 
 app.include_router(auth_router)
 app.include_router(contacts_router)
@@ -32,7 +43,9 @@ app.include_router(conversations_router)
 
 @app.get("/")
 def root():
-    return {"message": "Scalar Signal API is running"}
+    return {
+        "message": "Scalar Signal API is running"
+    }
 
 
 @app.get("/auth/me")
@@ -57,7 +70,10 @@ async def websocket_endpoint(
     db = SessionLocal()
 
     try:
-        # Validate JWT
+        # =========================
+        # Authenticate user
+        # =========================
+
         try:
             payload = jwt.decode(
                 token,
@@ -77,7 +93,10 @@ async def websocket_endpoint(
             await websocket.close(code=1008)
             return
 
-        # Check that user belongs to conversation
+        # =========================
+        # Check conversation member
+        # =========================
+
         member = (
             db.query(ConversationMember)
             .filter(
@@ -91,29 +110,65 @@ async def websocket_endpoint(
             await websocket.close(code=1008)
             return
 
+        # =========================
+        # Connect WebSocket
+        # =========================
+
         await manager.connect(
             conversation_id,
             websocket
         )
 
+        # =========================
+        # Receive WebSocket events
+        # =========================
+
         while True:
             data = await websocket.receive_json()
 
+            print("WEBSOCKET DATA:", data)
+
             event_type = data.get("type")
 
+            # =========================
             # Typing indicator
+            # =========================
+
             if event_type == "typing":
                 await manager.broadcast(
                     conversation_id,
                     {
                         "type": "typing",
                         "user_id": user_id,
-                        "is_typing": data.get("is_typing", False)
+                        "is_typing": data.get(
+                            "is_typing",
+                            False
+                        )
                     }
                 )
+
                 continue
 
-            # Message
+            # =========================
+            # Read receipt
+            # =========================
+
+            if event_type == "message_read":
+                await manager.broadcast(
+                    conversation_id,
+                    {
+                        "type": "message_read",
+                        "user_id": user_id,
+                        "message_id": data.get("message_id")
+                    }
+                )
+
+                continue
+
+            # =========================
+            # Normal message
+            # =========================
+
             content = data.get("content")
 
             if not content:
@@ -125,6 +180,13 @@ async def websocket_endpoint(
                     conversation_id=conversation_id,
                     sender_id=user_id,
                     content=content
+                )
+
+                # Temporary debugging
+                print(
+                    "SAVED MESSAGE:",
+                    message.id,
+                    message.content
                 )
 
                 await manager.broadcast(
@@ -140,8 +202,11 @@ async def websocket_endpoint(
                     }
                 )
 
-            except ValueError:
-                continue
+            except ValueError as error:
+                print(
+                    "MESSAGE ERROR:",
+                    error
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(
