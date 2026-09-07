@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "https://scalar-signal-backend.onrender.com";
 
 type Mode = "login" | "register";
 

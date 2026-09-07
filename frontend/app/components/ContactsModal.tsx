@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "https://scalar-signal-backend.onrender.com";
 
 type Contact = {
   id: number;
