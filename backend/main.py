@@ -20,6 +20,9 @@ from services.message_service import send_message
 from utils.auth_dependency import get_current_user
 from utils.jwt import SECRET_KEY, ALGORITHM
 
+import os
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 app = FastAPI(title="Scalar Signal API")
 
